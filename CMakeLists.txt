@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.23)
+project(hex_knife VERSION 0.0.1)
+
+set(CXX_STANDARD 20)
+
+set(HEX_KNIFE_BITNESS UNSUPPORTED)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(HEX_KNIFE_BITNESS ARCH_64BIT)
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(HEX_KNIFE_BITNESS ARCH_32BIT)
+else()
+  math(EXPR HEX_KNIFE_ARCH_BITNESS "${CMAKE_SIZEOF_VOID_P} * 8")
+  message(ERROR "No support for ${HEX_KNIFE_BITNESS} bit processors (only 32 and 64 bit processors are supported)")
+endif()
+
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  add_executable(main src/main.cpp src/arena.cpp)
+  target_include_directories(main PRIVATE src)
+  target_compile_definitions(main PRIVATE ${HEX_KNIFE_BITNESS})
+endif()
