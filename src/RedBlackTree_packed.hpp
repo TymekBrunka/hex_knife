@@ -86,13 +86,11 @@ private:
     while (z->index != root && &nodes[z->parent]->color == RED) {
       if (z->parent == &nodes[&nodes[z->parent]->parent]->left) {
         Node *y = (nodes.data() + &nodes[&nodes[z->parent]->parent]->right);
-        if (y != nullptr) {
-          if (y->color == RED) {
-            &nodes[z->parent]->color = BLACK;
-            y->color = BLACK;
-            &nodes[&nodes[z->parent]->parent]->color = RED;
-            z = &nodes[&nodes[z->parent]->parent];
-          }
+        if (y != nullptr && y->color == RED) {
+          &nodes[z->parent]->color = BLACK;
+          y->color = BLACK;
+          &nodes[&nodes[z->parent]->parent]->color = RED;
+          z = &nodes[&nodes[z->parent]->parent];
         } else {
           if (z->index == &nodes[z->parent]->right) {
             z = &nodes[z->parent];
@@ -104,13 +102,11 @@ private:
         }
       } else {
         Node *y = (nodes.data() + &nodes[&nodes[z->parent]->parent]->left);
-        if (y != nullptr) {
-          if (y->color == RED) {
-            &nodes[z->parent]->color = BLACK;
-            y->color = BLACK;
-            &nodes[&nodes[z->parent]->parent]->color = RED;
-            z = &nodes[&nodes[z->parent]->parent];
-          }
+        if (y != nullptr && y->color == RED) {
+          &nodes[z->parent]->color = BLACK;
+          y->color = BLACK;
+          &nodes[&nodes[z->parent]->parent]->color = RED;
+          z = &nodes[&nodes[z->parent]->parent];
         } else {
           if (z->index == &nodes[z->parent]->left) {
             z = z->parent;
@@ -192,60 +188,60 @@ private:
 
   // Function to fix violations after deleting a node
   void fixDelete(Node *x) {
-    while (x != root && x != nullptr && x->color == BLACK) {
-      if (x == x->parent->left) {
-        Node *w = x->parent->right;
+    while (x->index != root && x != nullptr && x->color == BLACK) {
+      if (x->index == &nodes[x->parent]->left) {
+        Node *w = &nodes[&nodes[x->parent]->right];
         if (w->color == RED) {
           w->color = BLACK;
-          x->parent->color = RED;
-          leftRotate(x->parent);
-          w = x->parent->right;
+          &nodes[x->parent]->color = RED;
+          leftRotate(&nodes[x->parent]);
+          w = &nodes[&nodes[x->parent]->right];
         }
-        if ((w->left == nullptr || w->left->color == BLACK) &&
-            (w->right == nullptr || w->right->color == BLACK)) {
+        if ((w->left == -1 || &nodes[w->left]->color == BLACK) &&
+            (w->right == -1 || &nodes[w->right]->color == BLACK)) {
           w->color = RED;
-          x = x->parent;
+          x = &nodes[x->parent];
         } else {
-          if (w->right == nullptr || w->right->color == BLACK) {
-            if (w->left != nullptr)
-              w->left->color = BLACK;
+          if (w->right == -1 || &nodes[w->right]->color == BLACK) {
+            if (w->left != -1)
+              &nodes[w->left]->color = BLACK;
             w->color = RED;
             rightRotate(w);
-            w = x->parent->right;
+            w = &nodes[&nodes[x->parent]->right];
           }
-          w->color = x->parent->color;
-          x->parent->color = BLACK;
-          if (w->right != nullptr)
-            w->right->color = BLACK;
-          leftRotate(x->parent);
-          x = root;
+          w->color = &nodes[x->parent]->color;
+          &nodes[x->parent]->color = BLACK;
+          if (w->right != -1)
+            &nodes[w->right]->color = BLACK;
+          leftRotate(&nodes[x->parent]);
+          x = &nodes[root];
         }
       } else {
-        Node *w = x->parent->left;
+        Node *w = &nodes[&nodes[x->parent]->left];
         if (w->color == RED) {
           w->color = BLACK;
-          x->parent->color = RED;
-          rightRotate(x->parent);
-          w = x->parent->left;
+          &nodes[x->parent]->color = RED;
+          rightRotate(&nodes[x->parent]);
+          w = &nodes[&nodes[x->parent]->left];
         }
-        if ((w->right == nullptr || w->right->color == BLACK) &&
-            (w->left == nullptr || w->left->color == BLACK)) {
+        if ((w->right == -1 || &nodes[w->right]->color == BLACK) &&
+            (w->left == -1 || &nodes[w->left]->color == BLACK)) {
           w->color = RED;
-          x = x->parent;
+          x = &nodes[x->parent];
         } else {
-          if (w->left == nullptr || w->left->color == BLACK) {
-            if (w->right != nullptr)
-              w->right->color = BLACK;
+          if (w->left == -1 || &nodes[w->left]->color == BLACK) {
+            if (w->right != -1)
+              &nodes[w->right]->color = BLACK;
             w->color = RED;
             leftRotate(w);
-            w = x->parent->left;
+            w = &nodes[&nodes[x->parent]->left];
           }
-          w->color = x->parent->color;
-          x->parent->color = BLACK;
-          if (w->left != nullptr)
+          w->color = &nodes[x->parent]->color;
+          &nodes[x->parent]->color = BLACK;
+          if (w->left != -1)
             w->left->color = BLACK;
-          rightRotate(x->parent);
-          x = root;
+          rightRotate(&nodes[x->parent]);
+          x = &nodes[root];
         }
       }
     }
@@ -255,24 +251,24 @@ private:
 
   // find the minimum node in a subtree
   Node *minimum(Node *node) {
-    while (node->left != nullptr)
-      node = node->left;
+    while (node->left != -1)
+      node = &nodes[node->left];
     return node;
   }
 
   // print the tree structure (in-order traversal)
   void printHelper(Node *root, int space) {
     constexpr int COUNT = 5;
-    if (root == nullptr)
+    if (root == -1)
       return;
     space += COUNT;
-    printHelper(root->right, space);
+    printHelper(&nodes[root->right], space);
     std::cout << std::endl;
     for (int i = COUNT; i < space; i++)
       std::cout << " ";
-    std::cout << root->data << "(" << ((root->color == RED) ? "RED" : "BLACK")
+    std::cout << &nodes[root]->data << "(" << ((&nodes[root]->color == RED) ? "RED" : "BLACK")
               << ")" << std::endl;
-    printHelper(root->left, space);
+    printHelper(&nodes[root->left], space);
   }
 
 public:
@@ -287,22 +283,22 @@ public:
     while (x != nullptr) {
       y = x;
       if (newNode->data < x->data)
-        x = x->left;
+        x = &nodes[x->left];
       else if (newNode->data > x->data)
-        x = x->right;
+        x = &nodes[x->right];
       else {
         x->value.push_back(val);
         return;
       }
     }
 
-    newNode->parent = y;
+    newNode->parent = y->index;
     if (y == nullptr)
-      root = newNode;
+      root = newNode->index;
     else if (newNode->data < y->data)
-      y->left = newNode;
+      y->left = newNode->index;
     else
-      y->right = newNode;
+      y->right = newNode->index;
 
     fixInsert(newNode);
   }
@@ -312,9 +308,9 @@ public:
     Node *z = root;
     while (z != nullptr) {
       if (val < z->data)
-        z = z->left;
+        z = &nodes[z->left];
       else if (val > z->data)
-        z = z->right;
+        z = &nodes[z->right];
       else {
         if (z->value.size() > 1) {
           z->value.pop_back();
