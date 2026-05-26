@@ -8,7 +8,6 @@
 #ifndef RedBlackTree_h
 #define RedBlackTree_h
 
-#include <cstdint>
 #include <vector>
 #endif /* RedBlackTree_h */
 
@@ -18,114 +17,122 @@ enum Color { RED, BLACK };
 
 template <typename Key, typename Value> struct Node {
   Color color;
+  int32_t left;
+  int32_t right;
+  int32_t parent;
+  int32_t index;
   Key data;
-  int16_t left;
-  int16_t right;
-  int16_t parent;
   std::vector<Value> value;
 
   explicit Node(int val)
-      : data(val), color(RED), left(-1), right(-1), parent(-1) {
-  } // node is considered red by default
+      : data(val), color(RED), left(-1), right(-1), parent(-1) {}
 };
 
 template <typename Key, typename Value> class RedBlackTree {
   using Node = Node<Key, Value>;
 
 private:
-  Node *root;
-  std::vector<int16_t> free_indexes;
-  std::vector<Node> nodes{
-      {.color = BLACK, .Key{}, .left = -1, .right = -1, .parent = -1}};
+  int32_t root = -1;
+  std::vector<Node> nodes{};
 
   //  left rotation
   void leftRotate(Node *x) {
-    if (x == nullptr || x->right == nullptr)
+    if (x == nullptr)
       return;
 
-    Node *y = x->right;
+    if (x->right == nullptr)
+      return;
+
+    Node *y = &nodes[x->right];
     x->right = y->left;
-    if (y->left != nullptr)
-      y->left->parent = x;
+    if (y->left != -1)
+      &nodes[y->left]->parent = x;
     y->parent = x->parent;
-    if (x->parent == nullptr)
-      root = y;
-    else if (x == x->parent->left)
-      x->parent->left = y;
+    if (x->parent == -1)
+      root = y->index;
+    else if (x->index == &nodes[x->parent]->left)
+      &nodes[x->parent]->left = y->index;
     else
-      x->parent->right = y;
-    y->left = x;
-    x->parent = y;
+      &nodes[x->parent]->right = y->index;
+    y->left = x->index;
+    x->parent = y->index;
   }
 
   //  right rotation
   void rightRotate(Node *y) {
-    if (y == nullptr || y->left == nullptr)
+    if (y == nullptr)
       return;
 
-    Node *x = y->left;
+    if (y->left == nullptr)
+      return;
+
+    Node *x = &nodes[y->left];
     y->left = x->right;
-    if (x->right != nullptr)
-      x->right->parent = y;
+    if (x->right != -1)
+      &nodes[x->right]->parent = y->index;
     x->parent = y->parent;
-    if (y->parent == nullptr)
-      root = x;
-    else if (y == y->parent->left)
-      y->parent->left = x;
+    if (y->parent == -1)
+      root = x->index;
+    else if (y->index == &nodes[y->parent]->left)
+      &nodes[y->parent]->left = x->index;
     else
-      y->parent->right = x;
-    x->right = y;
-    y->parent = x;
+      &nodes[y->parent]->right = x->index;
+    x->right = y->index;
+    y->parent = x->index;
   }
 
   // fix violations after inserting a node
   void fixInsert(Node *z) {
-    while (z != root && z->parent->color == RED) {
-      if (z->parent == z->parent->parent->left) {
-        Node *y = z->parent->parent->right;
-        if (y != nullptr && y->color == RED) {
-          z->parent->color = BLACK;
-          y->color = BLACK;
-          z->parent->parent->color = RED;
-          z = z->parent->parent;
+    while (z->index != root && &nodes[z->parent]->color == RED) {
+      if (z->parent == &nodes[&nodes[z->parent]->parent]->left) {
+        Node *y = (nodes.data() + &nodes[&nodes[z->parent]->parent]->right);
+        if (y != nullptr) {
+          if (y->color == RED) {
+            &nodes[z->parent]->color = BLACK;
+            y->color = BLACK;
+            &nodes[&nodes[z->parent]->parent]->color = RED;
+            z = &nodes[&nodes[z->parent]->parent];
+          }
         } else {
-          if (z == z->parent->right) {
-            z = z->parent;
+          if (z->index == &nodes[z->parent]->right) {
+            z = &nodes[z->parent];
             leftRotate(z);
           }
-          z->parent->color = BLACK;
-          z->parent->parent->color = RED;
-          rightRotate(z->parent->parent);
+          &nodes[z->parent]->color = BLACK;
+          &nodes[&nodes[z->parent]->parent]->color = RED;
+          rightRotate(&nodes[&nodes[z->parent]->parent]);
         }
       } else {
-        Node *y = z->parent->parent->left;
-        if (y != nullptr && y->color == RED) {
-          z->parent->color = BLACK;
-          y->color = BLACK;
-          z->parent->parent->color = RED;
-          z = z->parent->parent;
+        Node *y = (nodes.data() + &nodes[&nodes[z->parent]->parent]->left);
+        if (y != nullptr) {
+          if (y->color == RED) {
+            &nodes[z->parent]->color = BLACK;
+            y->color = BLACK;
+            &nodes[&nodes[z->parent]->parent]->color = RED;
+            z = &nodes[&nodes[z->parent]->parent];
+          }
         } else {
-          if (z == z->parent->left) {
+          if (z->index == &nodes[z->parent]->left) {
             z = z->parent;
             rightRotate(z);
           }
-          z->parent->color = BLACK;
-          z->parent->parent->color = RED;
-          leftRotate(z->parent->parent);
+          &nodes[z->parent]->color = BLACK;
+          &nodes[&nodes[z->parent]->parent]->color = RED;
+          leftRotate(&nodes[&nodes[z->parent]->parent]);
         }
       }
     }
-    root->color = BLACK;
+    &nodes[root]->color = BLACK;
   }
 
   // Transplant function used in deletion
   void transplant(Node *u, Node *v) {
-    if (u->parent == nullptr)
+    if (u->parent == -1)
       root = v;
-    else if (u == u->parent->left)
-      u->parent->left = v;
+    else if (u->index == &nodes[u->parent]->left)
+      &nodes[u->parent]->left = v->index;
     else
-      u->parent->right = v;
+      &nodes[u->parent]->right = v->index;
     if (v != nullptr)
       v->parent = u->parent;
   }
@@ -139,38 +146,41 @@ private:
     Node *x = nullptr;
     Color y_original_color = y->color;
 
-    if (z->left == nullptr) {
-      x = z->right;
-      transplant(z, z->right);
+    if (z->left == -1) {
+      x = &nodes[z->right];
+      transplant(z, &nodes[z->right]);
     } else if (z->right == nullptr) {
-      x = z->left;
-      transplant(z, z->left);
+      x = &nodes[z->left];
+      transplant(z, &nodes[z->left]);
     } else {
-      y = minimum(z->right);
+      y = minimum(&nodes[z->right]);
       y_original_color = y->color;
-      x = y->right;
+      x = &nodes[y->right];
 
-      if (y->parent == z) {
+      if (y->parent == z->index) {
         if (x != nullptr)
-          x->parent = y; // Check if x is not nullptr before assigning parent
+          x->parent =
+              y->index; // Check if x is not nullptr before assigning parent
       } else {
         if (x != nullptr)
           x->parent = y->parent; // Check if x and y->parent are not nullptr
                                  // before assigning parent
-        transplant(y, y->right);
-        if (y->right != nullptr)
-          y->right->parent =
-              y; // Check if y->right is not nullptr before assigning parent
+        transplant(y, &nodes[y->right]);
+        if (y->right != -1)
+          &nodes[y->right]->parent =
+              y->index; // Check if y->right is not nullptr before assigning
+                        // parent
         y->right = z->right;
-        if (y->right != nullptr)
-          y->right->parent =
-              y; // Check if y->right is not nullptr before assigning parent
+        if (y->right != -1)
+          &nodes[y->right]->parent =
+              y->index; // Check if y->right is not nullptr before assigning
+                        // parent
       }
       transplant(z, y);
       y->left = z->left;
-      if (y->left != nullptr)
-        y->left->parent =
-            y; // Check if y->left is not nullptr before assigning parent
+      if (y->left != -1)
+        &nodes[y->left]->parent =
+            y->index; // Check if y->left is not nullptr before assigning parent
       y->color = z->color;
     }
 
@@ -266,7 +276,7 @@ private:
   }
 
 public:
-  RedBlackTree() : root(nullptr) {}
+  RedBlackTree() : root(-1) {}
 
   // insert a node
   void insert(int val) {
