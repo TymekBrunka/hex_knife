@@ -1,38 +1,37 @@
 #pragma once
+#include <RedBlackTree.h>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
-struct page_hole {
-  void *ptr;
-  size_t size;
-};
+// struct page_hole {
+//   void *ptr;
+//   size_t size;
+// };
 
-typedef std::vector<page_hole> FreeList;
+typedef RedBlackTree<size_t, void *> FreeList;
 
 class Page {
 private:
-  int32_t free_memory_;
-  int32_t largest_free_block_;
-  const char *data;
-  size_t page_size;
-  std::unordered_map<void*, int32_t> alloc_lists[7]; // 7 allocation lists for each 16^x up to 16^x==256M
-                           // //used only for freeing
-  FreeList free_lists[7];  // 7 free lists for each 16^x up to 16^x==256M
+  int32_t free_memory = 0;
+  const unsigned char *data;
+  int32_t page_size = 0;
+  Node<size_t, void *>* largest_free_block;
+  std::unordered_map<void *, int32_t> alloc_list; // used only for freeing
+  FreeList free_list;
+
 public:
   Page() = default;
   Page(int32_t size);
 
-  void* alloc(int32_t size);
-  void free(void* ptr);
+  void *alloc(int32_t size);
+  void free(void *ptr);
 };
 
 class Arena {
-  int32_t free_memory_;
-  int32_t largest_free_block_;
+  int32_t free_memory;
   std::vector<Page> pages;
   std::vector<void *> big_data; // blobs larger than 128M
-  FreeList free_lists[3]; // 3 free lists for each 16^x from 16^x>128M up to
-                          // 16^x==64Gb
+  FreeList free_list;           // blobs larger than 128M
 };

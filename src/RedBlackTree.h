@@ -1,3 +1,6 @@
+// Updated to my needs
+// Tymek Brunka
+
 //
 //  RedBlackTree.h
 //  red-black-tree
@@ -9,7 +12,6 @@
 #define RedBlackTree_h
 
 #include <vector>
-#endif /* RedBlackTree_h */
 
 #include <iostream>
 
@@ -23,8 +25,8 @@ template <typename Key, typename Value> struct Node {
   Node *right;
   Node *parent;
 
-  explicit Node(int val)
-      : data(val), color(RED), left(nullptr), right(nullptr), parent(nullptr) {}
+  explicit Node(Key key, Value val)
+      : data(key), color(RED), left(nullptr), right(nullptr), parent(nullptr), value(std::vector<Value>{std::move(val)}) {}
 };
 
 template <typename Key, typename Value> class RedBlackTree {
@@ -263,9 +265,13 @@ private:
 public:
   RedBlackTree() : root(nullptr) {}
 
+  Node* get_root() const {
+    return root;
+  }
+
   // insert a node
-  void insert(int val) {
-    Node *newNode = new Node(val);
+  void insert(Key key, Value val) {
+    Node *newNode = new Node(key, val);
     Node *y = nullptr;
     Node *x = root;
 
@@ -276,7 +282,7 @@ public:
       else if (newNode->data > x->data)
         x = x->right;
       else {
-        x->value.push_back(val);
+        x->value.push_back(key);
         return;
       }
     }
@@ -293,12 +299,12 @@ public:
   }
 
   // delete a node by value
-  void remove(int val) {
+  void remove(Key key) {
     Node *z = root;
     while (z != nullptr) {
-      if (val < z->data)
+      if (key < z->data)
         z = z->left;
-      else if (val > z->data)
+      else if (key > z->data)
         z = z->right;
       else {
         if (z->value.size() > 1) {
@@ -309,10 +315,12 @@ public:
         return;
       }
     }
-    std::cout << "Node with value " << val << " not found in the tree."
+    std::cout << "Node with value " << key << " not found in the tree."
               << std::endl;
   }
 
   // print the tree structure
   void printTree() { printHelper(root, 0); }
 };
+
+#endif /* RedBlackTree_h */
